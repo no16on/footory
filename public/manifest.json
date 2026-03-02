@@ -1,0 +1,19 @@
+{
+  "name": "Footory",
+  "short_name": "Footory",
+  "description": "유소년 축구 선수의 커리어 프로필 OS",
+  "start_url": "/profile",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0B0E11",
+  "theme_color": "#0B0E11",
+  "lang": "ko",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}

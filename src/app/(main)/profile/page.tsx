@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const { profile, isLoading } = useProfile()
   const { highlights } = useHighlights(profile?.id)
   const { tagStats } = useTagPortfolio(profile?.id)
-  const { types: measurementTypes, records: measurementRecords, medals } = useMeasurements()
+  const { types: measurementTypes, records: measurementRecords, medals } = useMeasurements(Boolean(profile?.id))
 
   function handleShare() {
     if (!profile) return

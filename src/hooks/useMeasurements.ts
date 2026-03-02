@@ -37,7 +37,7 @@ export type CreateMeasurementInput = {
   evidenceMediaUrl?: string | null
 }
 
-export function useMeasurements() {
+export function useMeasurements(enabled = true) {
   const [types, setTypes] = useState<MeasurementType[]>([])
   const [records, setRecords] = useState<MeasurementRecord[]>([])
   const [medals, setMedals] = useState<MedalWithRule[]>([])
@@ -78,8 +78,17 @@ export function useMeasurements() {
   }, [])
 
   useEffect(() => {
+    if (!enabled) {
+      setTypes([])
+      setRecords([])
+      setMedals([])
+      setIsLoading(false)
+      setError(null)
+      return
+    }
+
     fetchAll()
-  }, [fetchAll])
+  }, [enabled, fetchAll])
 
   const recordsByType = useMemo(() => {
     const grouped: Record<string, MeasurementRecord[]> = {}

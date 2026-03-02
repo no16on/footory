@@ -273,6 +273,109 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['teams']['Insert']>
       }
+      team_members: {
+        Relationships: []
+        Row: {
+          team_id: string
+          user_id: string
+          role: string
+          joined_at: string
+        }
+        Insert: {
+          team_id: string
+          user_id: string
+          role?: string
+          joined_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['team_members']['Insert']>
+      }
+      team_announcements: {
+        Relationships: []
+        Row: {
+          id: string
+          team_id: string
+          author_id: string
+          title: string
+          body: string | null
+          is_pinned: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          author_id: string
+          title: string
+          body?: string | null
+          is_pinned?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['team_announcements']['Insert']>
+      }
+      team_events: {
+        Relationships: []
+        Row: {
+          id: string
+          team_id: string
+          title: string
+          event_type: string
+          start_at: string
+          end_at: string | null
+          location: string | null
+          description: string | null
+          created_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          title: string
+          event_type?: string
+          start_at: string
+          end_at?: string | null
+          location?: string | null
+          description?: string | null
+          created_by: string
+        }
+        Update: Partial<Database['public']['Tables']['team_events']['Insert']>
+      }
+      team_event_rsvps: {
+        Relationships: []
+        Row: {
+          event_id: string
+          user_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          event_id: string
+          user_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['team_event_rsvps']['Insert']>
+      }
+      team_media: {
+        Relationships: []
+        Row: {
+          id: string
+          team_id: string
+          uploaded_by: string
+          media_type: string
+          media_url: string
+          thumbnail_url: string | null
+          caption: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          team_id: string
+          uploaded_by: string
+          media_type: string
+          media_url: string
+          thumbnail_url?: string | null
+          caption?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['team_media']['Insert']>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
