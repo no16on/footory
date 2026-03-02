@@ -7,10 +7,12 @@ import { FeaturedHighlights } from '@/components/profile/FeaturedHighlights'
 import { TagPortfolio } from '@/components/profile/TagPortfolio'
 import { SeasonHistory } from '@/components/profile/SeasonHistory'
 import { useProfile } from '@/hooks/useProfile'
+import { useHighlights } from '@/hooks/useClips'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { profile, isLoading } = useProfile()
+  const { highlights, refetch: refetchHighlights } = useHighlights(profile?.id)
 
   function handleShare() {
     if (!profile) return
@@ -141,7 +143,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Featured Highlights */}
-        <FeaturedHighlights highlights={[]} isOwner />
+        <FeaturedHighlights
+          highlights={highlights.filter(h => h.is_featured)}
+          isOwner
+        />
 
         {/* Tag Portfolio */}
         <TagPortfolio tags={[]} isOwner />

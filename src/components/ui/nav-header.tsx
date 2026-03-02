@@ -6,10 +6,11 @@ import type { ReactNode } from 'react'
 interface NavHeaderProps {
   title?: string
   showBack?: boolean
+  onBack?: () => void
   rightAction?: ReactNode
 }
 
-export function NavHeader({ title, showBack = false, rightAction }: NavHeaderProps) {
+export function NavHeader({ title, showBack = false, onBack, rightAction }: NavHeaderProps) {
   const router = useRouter()
 
   return (
@@ -33,7 +34,7 @@ export function NavHeader({ title, showBack = false, rightAction }: NavHeaderPro
       <div style={{ width: '22px', display: 'flex', alignItems: 'center' }}>
         {showBack && (
           <button
-            onClick={() => router.back()}
+            onClick={() => onBack ? onBack() : router.back()}
             style={{
               background: 'none',
               border: 'none',
