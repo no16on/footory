@@ -59,8 +59,29 @@ export default async function PublicProfilePage({ params }: Props) {
     .eq('is_featured', true)
     .order('featured_order', { ascending: true })
 
-  // Tag summary (v1 — show empty, tags loaded in S3)
-  const tagMap: Record<string, { id: string; display_name: string; icon: string | null; clip_count: number }> = {}
+  // Tag portfolio: get clip_tags for this player's clips
+  const { data: clipTagsData } = await supabase
+    .from('clip_tags')
+    .select('tag_id, is_top_clip, clips!inner(player_id)')
+    .eq('clips.player_id', player.id)
+
+  const TAG_LIST_STATIC = [
+    { id: '1v1_dribble', display_name: '1v1 돌파', icon: '⚡' },
+    { id: 'shooting', display_name: '슈팅', icon: '🎯' },
+    { id: 'heading', display_name: '헤딩경합', icon: '💪' },
+    { id: 'first_touch', display_name: '퍼스트터치', icon: '✨' },
+    { id: 'forward_pass', display_name: '전진패스', icon: '📡' },
+    { id: '1v1_defense', display_name: '1v1 수비', icon: '🛡️' },
+  ]
+  const tagCountMap: Record<string, number> = {}
+  type ClipTagRow = { tag_id: string; is_top_clip: boolean; clips: { player_id: string } | null }
+  for (const ct of (clipTagsData as unknown as ClipTagRow[]) ?? []) {
+    const tid = ct.tag_id
+    tagCountMap[tid] = (tagCountMap[tid] ?? 0) + 1
+  }
+  const tagList = TAG_LIST_STATIC
+    .filter((t) => (tagCountMap[t.id] ?? 0) > 0)
+    .map((t) => ({ ...t, clip_count: tagCountMap[t.id] ?? 0 }))
 
   // Season history
   const { data: seasons } = await supabase
@@ -121,7 +142,7 @@ export default async function PublicProfilePage({ params }: Props) {
       <div style={{ padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <PlayerCard player={player} />
         <FeaturedHighlights highlights={highlights ?? []} />
-        <TagPortfolio tags={Object.values(tagMap)} />
+        <TagPortfolio tags={tagList} />
         <SeasonHistory seasons={seasons ?? []} />
       </div>
     </div>

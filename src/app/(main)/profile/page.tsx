@@ -8,11 +8,13 @@ import { TagPortfolio } from '@/components/profile/TagPortfolio'
 import { SeasonHistory } from '@/components/profile/SeasonHistory'
 import { useProfile } from '@/hooks/useProfile'
 import { useHighlights } from '@/hooks/useClips'
+import { useTagPortfolio } from '@/hooks/useTags'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { profile, isLoading } = useProfile()
-  const { highlights, refetch: refetchHighlights } = useHighlights(profile?.id)
+  const { highlights } = useHighlights(profile?.id)
+  const { tagStats } = useTagPortfolio(profile?.id)
 
   function handleShare() {
     if (!profile) return
@@ -149,7 +151,15 @@ export default function ProfilePage() {
         />
 
         {/* Tag Portfolio */}
-        <TagPortfolio tags={[]} isOwner />
+        <TagPortfolio
+          tags={tagStats.filter((t) => t.clip_count > 0).map((t) => ({
+            id: t.id,
+            display_name: t.display_name,
+            icon: t.icon,
+            clip_count: t.clip_count,
+          }))}
+          isOwner
+        />
 
         {/* Season History */}
         <SeasonHistory seasons={[]} isOwner />
