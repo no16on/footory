@@ -5,6 +5,7 @@ export type Database = {
   public: {
     Tables: {
       players: {
+        Relationships: []
         Row: {
           id: string
           user_id: string
@@ -38,6 +39,7 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['players']['Insert']>
       }
       clips: {
+        Relationships: []
         Row: {
           id: string
           player_id: string
@@ -64,6 +66,7 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['clips']['Insert']>
       }
       highlights: {
+        Relationships: []
         Row: {
           id: string
           player_id: string
@@ -91,6 +94,7 @@ export type Database = {
         Update: Partial<Database['public']['Tables']['highlights']['Insert']>
       }
       tags: {
+        Relationships: []
         Row: {
           id: string
           display_name: string
@@ -107,7 +111,46 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['tags']['Insert']>
       }
+      clip_tags: {
+        Relationships: []
+        Row: {
+          clip_id: string
+          tag_id: string
+          is_top_clip: boolean
+        }
+        Insert: {
+          clip_id: string
+          tag_id: string
+          is_top_clip?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['clip_tags']['Insert']>
+      }
+      seasons: {
+        Relationships: []
+        Row: {
+          id: string
+          player_id: string
+          year: number
+          team_id: string | null
+          team_name_snapshot: string | null
+          competitions: string | null
+          notes: string | null
+          representative_highlight_id: string | null
+        }
+        Insert: {
+          id?: string
+          player_id: string
+          year: number
+          team_id?: string | null
+          team_name_snapshot?: string | null
+          competitions?: string | null
+          notes?: string | null
+          representative_highlight_id?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['seasons']['Insert']>
+      }
       teams: {
+        Relationships: []
         Row: {
           id: string
           name: string
@@ -135,5 +178,6 @@ export type Database = {
     Views: Record<string, never>
     Functions: Record<string, never>
     Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
