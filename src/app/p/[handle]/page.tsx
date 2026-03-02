@@ -1,5 +1,6 @@
-import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { cache } from 'react'
+import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { PlayerCard } from '@/components/profile/PlayerCard'
 import { FeaturedHighlights } from '@/components/profile/FeaturedHighlights'
@@ -13,14 +14,31 @@ interface Props {
   params: Promise<{ handle: string }>
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { handle } = await params
+export const revalidate = 60
+
+const TAG_LIST_STATIC = [
+  { id: '1v1_dribble', display_name: '1v1 돌파', icon: '⚡' },
+  { id: 'shooting', display_name: '슈팅', icon: '🎯' },
+  { id: 'heading', display_name: '헤딩경합', icon: '💪' },
+  { id: 'first_touch', display_name: '퍼스트터치', icon: '✨' },
+  { id: 'forward_pass', display_name: '전진패스', icon: '📡' },
+  { id: '1v1_defense', display_name: '1v1 수비', icon: '🛡️' },
+]
+
+const getPlayerByHandle = cache(async (handle: string) => {
   const supabase = await createClient()
-  const { data: player } = await supabase
+  const { data } = await supabase
     .from('players')
-    .select('display_name, position, region, bio')
+    .select('*')
     .eq('handle', handle)
     .single()
+
+  return (data as Player | null) ?? null
+})
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { handle } = await params
+  const player = await getPlayerByHandle(handle)
 
   if (!player) {
     return { title: 'Footory' }
@@ -36,38 +54,44 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${player.display_name} — Footory`,
       description,
       siteName: 'Footory',
+      images: [
+        {
+          url: `/p/${handle}/opengraph-image`,
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${player.display_name} — Footory`,
+      description,
+      images: [`/p/${handle}/opengraph-image`],
     },
   }
 }
 
 export default async function PublicProfilePage({ params }: Props) {
   const { handle } = await params
+  const player = await getPlayerByHandle(handle)
+
+  if (!player) {
+    notFound()
+  }
+
   const supabase = await createClient()
 
-  const { data: playerData } = await supabase
-    .from('players')
-    .select('*')
-    .eq('handle', handle)
-    .single()
-
-  if (!playerData) notFound()
-  const player = playerData as unknown as Player
-
-  // Featured highlights
-  const { data: highlights } = await supabase
-    .from('highlights')
-    .select('id, video_url, thumbnail_url, duration_seconds, featured_order')
-    .eq('player_id', player.id)
-    .eq('is_featured', true)
-    .order('featured_order', { ascending: true })
-
-  // Tag portfolio: get clip_tags for this player's clips
-  const { data: clipTagsData } = await supabase
-    .from('clip_tags')
-    .select('tag_id, is_top_clip, clips!inner(player_id)')
-    .eq('clips.player_id', player.id)
-
-  const [{ data: measurementTypes }, { data: measurementRecords }, { data: medals }] = await Promise.all([
+  const [highlightsRes, clipTagsRes, measurementTypesRes, measurementRecordsRes, medalsRes, seasonsRes] = await Promise.all([
+    supabase
+      .from('highlights')
+      .select('id, video_url, thumbnail_url, duration_seconds, featured_order')
+      .eq('player_id', player.id)
+      .eq('is_featured', true)
+      .order('featured_order', { ascending: true }),
+    supabase
+      .from('clip_tags')
+      .select('tag_id, clips!inner(player_id)')
+      .eq('clips.player_id', player.id),
     supabase
       .from('measurement_types')
       .select('*')
@@ -84,52 +108,48 @@ export default async function PublicProfilePage({ params }: Props) {
       .eq('player_id', player.id)
       .order('is_featured', { ascending: false })
       .order('earned_at', { ascending: false }),
+    supabase
+      .from('seasons')
+      .select('id, year, team_name_snapshot, competitions, notes')
+      .eq('player_id', player.id)
+      .order('year', { ascending: false }),
   ])
 
-  const typedMeasurementTypes = (measurementTypes ?? []) as Database['public']['Tables']['measurement_types']['Row'][]
-  const typedMeasurementRecords = (measurementRecords ?? []) as Database['public']['Tables']['measurement_records']['Row'][]
-  const typedMedals = (medals ?? []) as Array<{
+  const tagCountMap: Record<string, number> = {}
+
+  for (const ct of (clipTagsRes.data as Array<{ tag_id: string }> | null) ?? []) {
+    tagCountMap[ct.tag_id] = (tagCountMap[ct.tag_id] ?? 0) + 1
+  }
+
+  const tagList = TAG_LIST_STATIC
+    .filter((item) => (tagCountMap[item.id] ?? 0) > 0)
+    .map((item) => ({
+      ...item,
+      clip_count: tagCountMap[item.id] ?? 0,
+    }))
+
+  const typedMeasurementTypes = (measurementTypesRes.data ?? []) as Database['public']['Tables']['measurement_types']['Row'][]
+  const typedMeasurementRecords = (measurementRecordsRes.data ?? []) as Database['public']['Tables']['measurement_records']['Row'][]
+  const typedMedals = (medalsRes.data ?? []) as Array<{
     id: string
     is_featured: boolean
-    medal_rules: {
-      id: string
-      type_id: string
-      display_name: string
-      threshold_value: number
-      sort_order: number
-    } | null | Array<{
-      id: string
-      type_id: string
-      display_name: string
-      threshold_value: number
-      sort_order: number
-    }>
+    medal_rules:
+      | {
+          id: string
+          type_id: string
+          display_name: string
+          threshold_value: number
+          sort_order: number
+        }
+      | null
+      | Array<{
+          id: string
+          type_id: string
+          display_name: string
+          threshold_value: number
+          sort_order: number
+        }>
   }>
-
-  const TAG_LIST_STATIC = [
-    { id: '1v1_dribble', display_name: '1v1 돌파', icon: '⚡' },
-    { id: 'shooting', display_name: '슈팅', icon: '🎯' },
-    { id: 'heading', display_name: '헤딩경합', icon: '💪' },
-    { id: 'first_touch', display_name: '퍼스트터치', icon: '✨' },
-    { id: 'forward_pass', display_name: '전진패스', icon: '📡' },
-    { id: '1v1_defense', display_name: '1v1 수비', icon: '🛡️' },
-  ]
-  const tagCountMap: Record<string, number> = {}
-  type ClipTagRow = { tag_id: string; is_top_clip: boolean; clips: { player_id: string } | null }
-  for (const ct of (clipTagsData as unknown as ClipTagRow[]) ?? []) {
-    const tid = ct.tag_id
-    tagCountMap[tid] = (tagCountMap[tid] ?? 0) + 1
-  }
-  const tagList = TAG_LIST_STATIC
-    .filter((t) => (tagCountMap[t.id] ?? 0) > 0)
-    .map((t) => ({ ...t, clip_count: tagCountMap[t.id] ?? 0 }))
-
-  // Season history
-  const { data: seasons } = await supabase
-    .from('seasons')
-    .select('id, year, team_name_snapshot, competitions, notes')
-    .eq('player_id', player.id)
-    .order('year', { ascending: false })
 
   return (
     <div
@@ -140,17 +160,16 @@ export default async function PublicProfilePage({ params }: Props) {
         margin: '0 auto',
       }}
     >
-      {/* Header */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 20px',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          borderBottom: '1px solid #2A2F22',
           position: 'sticky',
           top: 0,
-          background: '#0B0E11',
+          background: '#12160F',
           zIndex: 10,
         }}
       >
@@ -172,17 +191,16 @@ export default async function PublicProfilePage({ params }: Props) {
             fontFamily: "'JetBrains Mono', monospace",
             fontSize: '10px',
             color: '#706B56',
-            letterSpacing: '1px',
+            letterSpacing: '1.4px',
           }}
         >
-          PUBLIC PROFILE
+          SCOUT PROFILE
         </div>
       </div>
 
-      {/* Content */}
       <div style={{ padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <PlayerCard player={player} />
-        <FeaturedHighlights highlights={highlights ?? []} />
+        <FeaturedHighlights highlights={highlightsRes.data ?? []} />
         <MeasuredStats
           types={typedMeasurementTypes}
           records={typedMeasurementRecords.map((record) => ({
@@ -197,7 +215,7 @@ export default async function PublicProfilePage({ params }: Props) {
           }))}
         />
         <TagPortfolio tags={tagList} />
-        <SeasonHistory seasons={seasons ?? []} />
+        <SeasonHistory seasons={seasonsRes.data ?? []} />
       </div>
     </div>
   )

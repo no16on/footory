@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // 보호된 라우트: /profile, /upload, /tags, /measurements, /team
-  const protectedPaths = ['/profile', '/upload', '/tags', '/measurements', '/team']
+  const protectedPaths = ['/profile', '/upload', '/tags', '/measurements', '/team', '/scout']
   const isProtected = protectedPaths.some(p =>
     request.nextUrl.pathname.startsWith(p)
   )

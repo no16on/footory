@@ -147,6 +147,38 @@ export default function ProfilePage() {
           </svg>
         </div>
 
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 14px',
+            background: 'rgba(91,191,207,0.08)',
+            border: '1px solid rgba(91,191,207,0.2)',
+            borderRadius: '10px',
+            cursor: 'pointer',
+          }}
+          onClick={() => router.push('/scout')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#5BBFCF">
+            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20l-6-6zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+          </svg>
+          <span
+            style={{
+              flex: 1,
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: '11px',
+              color: '#A8A28A',
+              letterSpacing: '1px',
+            }}
+          >
+            SCOUT VIEW · 선수 검색
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#706B56">
+            <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+          </svg>
+        </div>
+
         {/* Featured Highlights */}
         <FeaturedHighlights
           highlights={highlights.filter(h => h.is_featured)}

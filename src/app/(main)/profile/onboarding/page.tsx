@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { POSITIONS } from '@/types/profile'
@@ -17,7 +17,45 @@ export default function OnboardingPage() {
   const [region, setRegion] = useState('')
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingExisting, setIsCheckingExisting] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+
+    async function checkExistingProfile() {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+          router.replace('/login')
+          return
+        }
+
+        const { data: existingProfile } = await supabase
+          .from('players')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+
+        if (existingProfile) {
+          router.replace('/profile')
+          return
+        }
+      } finally {
+        if (mounted) {
+          setIsCheckingExisting(false)
+        }
+      }
+    }
+
+    checkExistingProfile()
+
+    return () => {
+      mounted = false
+    }
+  }, [router])
 
   async function checkHandle(value: string) {
     if (!value) { setHandleStatus('idle'); return }
@@ -57,6 +95,10 @@ export default function OnboardingPage() {
       })
 
       if (insertError) {
+        if (insertError.code === '23505' && insertError.message.includes('players_user_id_key')) {
+          router.replace('/profile')
+          return
+        }
         setError(insertError.message)
       } else {
         router.replace('/profile')
@@ -87,6 +129,26 @@ export default function OnboardingPage() {
     letterSpacing: '1.5px',
     textTransform: 'uppercase' as const,
     marginBottom: '8px',
+  }
+
+  if (isCheckingExisting) {
+    return (
+      <div
+        style={{
+          minHeight: '100dvh',
+          backgroundColor: '#0B0E11',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#706B56',
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '12px',
+          letterSpacing: '1px',
+        }}
+      >
+        CHECKING PROFILE...
+      </div>
+    )
   }
 
   return (
