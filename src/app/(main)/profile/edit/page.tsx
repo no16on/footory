@@ -67,7 +67,6 @@ export default function ProfileEditPage() {
     color: '#F4F2EA',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
-    outline: 'none',
     boxSizing: 'border-box' as const,
   }
 
@@ -112,7 +111,7 @@ export default function ProfileEditPage() {
               padding: 0,
             }}
           >
-            {isSaving ? '저장 중' : '저장'}
+            {isSaving ? '저장 중…' : '저장'}
           </button>
         }
       />
@@ -135,19 +134,22 @@ export default function ProfileEditPage() {
         )}
 
         <div>
-          <label style={labelStyle}>이름 *</label>
+          <label htmlFor="edit-display-name" style={labelStyle}>이름 *</label>
           <input
+            id="edit-display-name"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             maxLength={100}
+            autoComplete="name"
             style={inputStyle}
           />
         </div>
 
         <div>
-          <label style={labelStyle}>한 줄 소개</label>
+          <label htmlFor="edit-bio" style={labelStyle}>한 줄 소개</label>
           <textarea
+            id="edit-bio"
             value={bio}
             onChange={(e) => setBio(e.target.value)}
             maxLength={200}
@@ -157,7 +159,7 @@ export default function ProfileEditPage() {
               resize: 'none',
               lineHeight: 1.6,
             }}
-            placeholder="나를 표현하는 한 마디 (최대 200자)"
+            placeholder="나를 표현하는 한 마디 (최대 200자)…"
           />
           <div
             style={{
@@ -173,9 +175,11 @@ export default function ProfileEditPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>출생 연도</label>
+          <label htmlFor="edit-birth-year" style={labelStyle}>출생 연도</label>
           <input
+            id="edit-birth-year"
             type="number"
+            inputMode="numeric"
             value={birthYear}
             onChange={(e) => setBirthYear(e.target.value)}
             min={1990}
@@ -186,8 +190,9 @@ export default function ProfileEditPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>주 포지션</label>
+          <label htmlFor="edit-position" style={labelStyle}>주 포지션</label>
           <select
+            id="edit-position"
             value={position}
             onChange={(e) => setPosition(e.target.value)}
             style={{ ...inputStyle, appearance: 'none' }}
@@ -202,8 +207,9 @@ export default function ProfileEditPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>서브 포지션</label>
+          <label htmlFor="edit-secondary-position" style={labelStyle}>서브 포지션</label>
           <select
+            id="edit-secondary-position"
             value={secondaryPosition}
             onChange={(e) => setSecondaryPosition(e.target.value)}
             style={{ ...inputStyle, appearance: 'none' }}
@@ -218,13 +224,15 @@ export default function ProfileEditPage() {
         </div>
 
         <div>
-          <label style={labelStyle}>지역</label>
+          <label htmlFor="edit-region" style={labelStyle}>지역</label>
           <input
+            id="edit-region"
             type="text"
             value={region}
             onChange={(e) => setRegion(e.target.value)}
             style={inputStyle}
             placeholder="서울, 경기 등"
+            autoComplete="address-level1"
           />
         </div>
       </div>

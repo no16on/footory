@@ -21,12 +21,11 @@ export function NavHeader({ title, showBack = false, onBack, rightAction }: NavH
         zIndex: 50,
         backgroundColor: '#12160F',
         borderBottom: '1px solid #2A2F22',
-        padding: '12px 20px',
+        padding: '0 20px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         height: '46px',
-        maxWidth: '390px',
         width: '100%',
       }}
     >

@@ -13,6 +13,7 @@ export default function MainLayout({
         minHeight: '100dvh',
         backgroundColor: '#0B0E11',
         position: 'relative',
+        overflowX: 'hidden',
       }}
     >
       <main style={{ paddingBottom: '72px' }}>

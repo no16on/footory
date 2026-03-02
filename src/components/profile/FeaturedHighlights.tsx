@@ -103,7 +103,9 @@ function HighlightThumbnail({ highlight }: { highlight: Highlight }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={highlight.thumbnail_url}
-          alt="하이라이트"
+          alt="하이라이트 썸네일"
+          width={160}
+          height={90}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (
@@ -116,7 +118,7 @@ function HighlightThumbnail({ highlight }: { highlight: Highlight }) {
             justifyContent: 'center',
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="#D4A843">
+          <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="#D4A843">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
@@ -161,7 +163,7 @@ function HighlightThumbnail({ highlight }: { highlight: Highlight }) {
             justifyContent: 'center',
           }}
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="#0B0E11">
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="#0B0E11">
             <path d="M8 5v14l11-7z" />
           </svg>
         </div>
@@ -188,7 +190,7 @@ function EmptySlot({ isOwner }: { isOwner?: boolean }) {
       }}
     >
       {isOwner && (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(212,168,67,0.3)">
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="rgba(212,168,67,0.3)">
           <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
         </svg>
       )}

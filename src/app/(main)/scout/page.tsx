@@ -87,7 +87,8 @@ export default function ScoutPage() {
           <input
             value={q}
             onChange={(event) => setQ(event.target.value)}
-            placeholder="이름 또는 핸들 검색"
+            placeholder="이름 또는 핸들 검색…"
+            aria-label="선수 이름 또는 핸들 검색"
             style={{
               width: '100%',
               padding: '10px 12px',
@@ -103,7 +104,8 @@ export default function ScoutPage() {
           <input
             value={region}
             onChange={(event) => setRegion(event.target.value)}
-            placeholder="지역 필터 (예: 서울, 경기)"
+            placeholder="지역 필터 (예: 서울, 경기)…"
+            aria-label="지역 필터"
             style={{
               width: '100%',
               padding: '10px 12px',
@@ -163,7 +165,7 @@ export default function ScoutPage() {
 
         {isLoading && (
           <div style={{ textAlign: 'center', fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#706B56', padding: '20px 0' }}>
-            LOADING SCOUT DATA...
+            LOADING SCOUT DATA…
           </div>
         )}
 
@@ -198,7 +200,7 @@ export default function ScoutPage() {
                 <div style={{ width: '52px', height: '52px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, background: 'linear-gradient(135deg, #B8922E, #D4A843)' }}>
                   {player.profile_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={player.profile_image_url} alt={player.display_name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={player.profile_image_url} alt={player.display_name} width={52} height={52} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Sora', sans-serif", fontWeight: 900, color: '#0B0E11' }}>
                       {player.display_name[0]}

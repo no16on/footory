@@ -194,7 +194,9 @@ function TeamMediaCard({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={media.thumbnail_url || media.media_url}
-          alt={media.caption || 'team media'}
+          alt={media.caption || '팀 미디어'}
+          width={160}
+          height={120}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
@@ -251,7 +253,7 @@ function TeamMediaCard({
               opacity: claimingId === media.id ? 0.7 : 1,
             }}
           >
-            {claimingId === media.id ? '가져오는 중...' : '내 프로필로 가져오기'}
+            {claimingId === media.id ? '가져오는 중…' : '내 프로필로 가져오기'}
           </button>
         )}
       </div>
@@ -496,7 +498,7 @@ export default function TeamPage() {
             textAlign: 'center',
           }}
         >
-          LOADING TEAM HUB...
+          LOADING TEAM HUB…
         </div>
       </>
     )
@@ -643,15 +645,15 @@ export default function TeamPage() {
                 padding: '16px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-                <div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', letterSpacing: '1.5px', color: '#706B56', textTransform: 'uppercase' }}>
                     TEAM
                   </p>
-                  <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: '20px', fontWeight: 800, color: '#F4F2EA', marginTop: '2px' }}>
+                  <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: '20px', fontWeight: 800, color: '#F4F2EA', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {details.team.name}
                   </h2>
-                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#A8A28A', marginTop: '4px' }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#A8A28A', marginTop: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {details.team.region || '지역 미정'} · {details.team.season_year} 시즌
                   </p>
                 </div>
@@ -666,6 +668,7 @@ export default function TeamPage() {
                     fontSize: '10px',
                     color: '#F0D078',
                     textTransform: 'uppercase',
+                    flexShrink: 0,
                   }}
                 >
                   {TEAM_ROLE_LABEL[details.myRole]}
@@ -694,10 +697,10 @@ export default function TeamPage() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '8px' }}>
-              <StatCard label="MEM" value={String(stats.members)} color="#D4A843" />
-              <StatCard label="POST" value={String(stats.announcements)} color="#6BCB77" />
-              <StatCard label="EVENT" value={String(stats.events)} color="#E8943A" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>
+              <StatCard label="MEMBERS" value={String(stats.members)} color="#D4A843" />
+              <StatCard label="POSTS" value={String(stats.announcements)} color="#6BCB77" />
+              <StatCard label="EVENTS" value={String(stats.events)} color="#E8943A" />
               <StatCard label="MEDIA" value={String(stats.media)} color="#5BBFCF" />
             </div>
 
@@ -732,10 +735,10 @@ export default function TeamPage() {
 
               {details.announcements.map((item) => (
                 <div key={item.id} style={{ background: '#1A1E16', border: `1px solid ${item.is_pinned ? 'rgba(212,168,67,0.28)' : '#2A2F22'}`, borderRadius: '10px', padding: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: '#F4F2EA' }}>{item.title}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: '#F4F2EA', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
                     {item.is_pinned && (
-                      <span style={{ padding: '3px 7px', borderRadius: '20px', background: 'rgba(212,168,67,0.18)', border: '1px solid rgba(212,168,67,0.35)', fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#F0D078' }}>
+                      <span style={{ padding: '3px 7px', borderRadius: '20px', background: 'rgba(212,168,67,0.18)', border: '1px solid rgba(212,168,67,0.35)', fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#F0D078', flexShrink: 0 }}>
                         PINNED
                       </span>
                     )}
@@ -793,14 +796,17 @@ export default function TeamPage() {
 
                 return (
                   <div key={event.id} style={{ background: '#1A1E16', border: `1px solid ${color}30`, borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: '#F4F2EA' }}>{event.title}</p>
-                      <span style={{ padding: '3px 7px', borderRadius: '20px', border: `1px solid ${color}55`, background: `${color}22`, color, fontFamily: "'JetBrains Mono', monospace", fontSize: '9px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', fontWeight: 700, color: '#F4F2EA', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.title}</p>
+                      <span style={{ padding: '3px 7px', borderRadius: '20px', border: `1px solid ${color}55`, background: `${color}22`, color, fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', flexShrink: 0 }}>
                         {TEAM_EVENT_TYPE_LABEL[type]}
                       </span>
                     </div>
 
-                    <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#A8A28A' }}>{formatDateTime(event.start_at)}{event.end_at ? ` - ${formatDateTime(event.end_at)}` : ''}</p>
+                    <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#A8A28A', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                      {formatDateTime(event.start_at)}
+                      {event.end_at ? <><br /><span style={{ color: '#706B56' }}>~</span> {formatDateTime(event.end_at)}</> : ''}
+                    </p>
                     <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '12px', color: '#706B56' }}>{event.location || '장소 미정'}</p>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '6px' }}>
@@ -844,7 +850,7 @@ export default function TeamPage() {
                 />
 
                 <label style={{ ...buttonStyle(false), textAlign: 'center' }}>
-                  {isUploadingMedia ? '업로드 중...' : '파일 선택 후 업로드'}
+                  {isUploadingMedia ? '업로드 중…' : '파일 선택 후 업로드'}
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -917,11 +923,11 @@ export default function TeamPage() {
                         {initial}
                       </div>
 
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#F4F2EA', fontWeight: 700 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', color: '#F4F2EA', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {member.player?.display_name || member.user_id.slice(0, 8)}
                         </p>
-                        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#706B56' }}>
+                        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#706B56', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {member.player?.position || 'POS 미정'} · {member.player?.handle ? `@${member.player.handle}` : '핸들 미등록'}
                         </p>
                       </div>
