@@ -53,7 +53,6 @@ body {
   color-scheme: dark;
 }
 
-/* Keyboard focus ring */
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -66,6 +65,61 @@ body {
 
 * { scrollbar-width: none; }
 ::-webkit-scrollbar { display: none; }
+
+/* App-like page transitions */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.3s ease-out both;
+}
+
+.animate-fade-in-delay-1 { animation: fadeInUp 0.35s ease-out 0.05s both; }
+.animate-fade-in-delay-2 { animation: fadeInUp 0.35s ease-out 0.1s both; }
+.animate-fade-in-delay-3 { animation: fadeInUp 0.35s ease-out 0.15s both; }
+.animate-fade-in-delay-4 { animation: fadeInUp 0.35s ease-out 0.2s both; }
+
+.skeleton {
+  background: linear-gradient(90deg, #1A1E16 25%, #2A2F22 50%, #1A1E16 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Smooth transitions for interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.15s ease;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Fix datetime-local inputs on mobile */
+input[type="datetime-local"] {
+  font-size: 12px !important;
+  min-width: 0 !important;
+  padding: 8px 6px !important;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) hue-rotate(10deg);
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

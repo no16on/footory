@@ -85,9 +85,29 @@ export function TagPortfolio({ tags, isOwner }: TagPortfolioProps) {
             }}
           >
             {isOwner
-              ? '영상을 올리고 기술 태그를 추가하세요'
+              ? '영상을 올리고 기술 태그를 연결하세요'
               : '아직 기술 태그가 없습니다'}
           </p>
+          {isOwner && (
+            <Link
+              href="/upload"
+              style={{
+                display: 'inline-block',
+                marginTop: '12px',
+                padding: '8px 16px',
+                background: 'rgba(212,168,67,0.12)',
+                border: '1px solid rgba(212,168,67,0.3)',
+                borderRadius: '8px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#D4A843',
+                textDecoration: 'none',
+              }}
+            >
+              영상 업로드
+            </Link>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>

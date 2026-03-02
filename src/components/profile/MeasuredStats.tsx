@@ -112,6 +112,47 @@ export function MeasuredStats({ types, records, medals, isOwner }: MeasuredStats
         )}
       </div>
 
+      {records.length === 0 && isOwner ? (
+        <div
+          style={{
+            background: '#12160F',
+            borderRadius: '12px',
+            border: '1px dashed rgba(212,168,67,0.15)',
+            padding: '24px',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: '24px', marginBottom: '8px' }}>📏</div>
+          <p
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '13px',
+              color: '#706B56',
+              margin: 0,
+            }}
+          >
+            첫 측정 기록을 추가해보세요
+          </p>
+          <Link
+            href="/measurements"
+            style={{
+              display: 'inline-block',
+              marginTop: '12px',
+              padding: '8px 16px',
+              background: 'rgba(212,168,67,0.12)',
+              border: '1px solid rgba(212,168,67,0.3)',
+              borderRadius: '8px',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#D4A843',
+              textDecoration: 'none',
+            }}
+          >
+            측정 기록 추가
+          </Link>
+        </div>
+      ) : (
       <div
         style={{
           display: 'grid',
@@ -195,6 +236,7 @@ export function MeasuredStats({ types, records, medals, isOwner }: MeasuredStats
           )
         })}
       </div>
+      )}
 
       <div
         style={{

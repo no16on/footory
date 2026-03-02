@@ -7,6 +7,7 @@ import { FeaturedHighlights } from '@/components/profile/FeaturedHighlights'
 import { MeasuredStats } from '@/components/profile/MeasuredStats'
 import { TagPortfolio } from '@/components/profile/TagPortfolio'
 import { SeasonHistory } from '@/components/profile/SeasonHistory'
+import { ShareButton } from '@/components/ui/share-button'
 import type { Player } from '@/types/profile'
 import type { Database } from '@/types/database'
 
@@ -152,53 +153,17 @@ export default async function PublicProfilePage({ params }: Props) {
   }>
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        backgroundColor: '#0B0E11',
-        maxWidth: '390px',
-        margin: '0 auto',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 20px',
-          borderBottom: '1px solid #2A2F22',
-          position: 'sticky',
-          top: 0,
-          background: '#12160F',
-          zIndex: 10,
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "'Sora', sans-serif",
-            fontWeight: 900,
-            fontSize: '16px',
-            background: 'linear-gradient(135deg, #B8922E, #D4A843, #E8C35A)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
+    <div className="min-h-dvh bg-bg max-w-[390px] mx-auto relative">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-border sticky top-0 bg-surface z-10">
+        <div className="font-display font-black text-base bg-gold-gradient bg-clip-text text-transparent">
           FOOTORY
         </div>
-        <div
-          style={{
-            fontFamily: "'JetBrains Mono', monospace",
-            fontSize: '10px',
-            color: '#706B56',
-            letterSpacing: '1.4px',
-          }}
-        >
+        <div className="font-mono text-[10px] text-text-dim tracking-[1.4px]">
           SCOUT PROFILE
         </div>
       </div>
 
-      <div style={{ padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="px-5 pt-4 pb-12 flex flex-col gap-6">
         <PlayerCard player={player} />
         <FeaturedHighlights highlights={highlightsRes.data ?? []} />
         <MeasuredStats
@@ -217,6 +182,8 @@ export default async function PublicProfilePage({ params }: Props) {
         <TagPortfolio tags={tagList} />
         <SeasonHistory seasons={seasonsRes.data ?? []} />
       </div>
+
+      <ShareButton />
     </div>
   )
 }
