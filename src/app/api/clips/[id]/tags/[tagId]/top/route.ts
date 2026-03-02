@@ -3,12 +3,12 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
 
-// PUT /api/clips/[clipId]/tags/[tagId]/top — set clip as top for tag
+// PUT /api/clips/[id]/tags/[tagId]/top — set clip as top for tag
 export async function PUT(
   _req: NextRequest,
-  { params }: { params: Promise<{ clipId: string; tagId: string }> }
+  { params }: { params: Promise<{ id: string; tagId: string }> }
 ) {
-  const { clipId, tagId } = await params
+  const { id, tagId } = await params
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,7 +30,7 @@ export async function PUT(
   const { data: clip } = await supabase
     .from('clips')
     .select('id')
-    .eq('id', clipId)
+    .eq('id', id)
     .eq('player_id', player.id)
     .single()
   if (!clip) return NextResponse.json({ error: 'Clip not found' }, { status: 404 })
@@ -56,7 +56,7 @@ export async function PUT(
   const { error } = await supabase
     .from('clip_tags')
     .update({ is_top_clip: true })
-    .eq('clip_id', clipId)
+    .eq('clip_id', id)
     .eq('tag_id', tagId)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

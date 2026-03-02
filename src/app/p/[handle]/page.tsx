@@ -3,9 +3,11 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { PlayerCard } from '@/components/profile/PlayerCard'
 import { FeaturedHighlights } from '@/components/profile/FeaturedHighlights'
+import { MeasuredStats } from '@/components/profile/MeasuredStats'
 import { TagPortfolio } from '@/components/profile/TagPortfolio'
 import { SeasonHistory } from '@/components/profile/SeasonHistory'
 import type { Player } from '@/types/profile'
+import type { Database } from '@/types/database'
 
 interface Props {
   params: Promise<{ handle: string }>
@@ -64,6 +66,45 @@ export default async function PublicProfilePage({ params }: Props) {
     .from('clip_tags')
     .select('tag_id, is_top_clip, clips!inner(player_id)')
     .eq('clips.player_id', player.id)
+
+  const [{ data: measurementTypes }, { data: measurementRecords }, { data: medals }] = await Promise.all([
+    supabase
+      .from('measurement_types')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true }),
+    supabase
+      .from('measurement_records')
+      .select('*')
+      .eq('player_id', player.id)
+      .order('recorded_at', { ascending: false }),
+    supabase
+      .from('player_medals')
+      .select('id, is_featured, medal_rules(id, type_id, display_name, threshold_value, sort_order)')
+      .eq('player_id', player.id)
+      .order('is_featured', { ascending: false })
+      .order('earned_at', { ascending: false }),
+  ])
+
+  const typedMeasurementTypes = (measurementTypes ?? []) as Database['public']['Tables']['measurement_types']['Row'][]
+  const typedMeasurementRecords = (measurementRecords ?? []) as Database['public']['Tables']['measurement_records']['Row'][]
+  const typedMedals = (medals ?? []) as Array<{
+    id: string
+    is_featured: boolean
+    medal_rules: {
+      id: string
+      type_id: string
+      display_name: string
+      threshold_value: number
+      sort_order: number
+    } | null | Array<{
+      id: string
+      type_id: string
+      display_name: string
+      threshold_value: number
+      sort_order: number
+    }>
+  }>
 
   const TAG_LIST_STATIC = [
     { id: '1v1_dribble', display_name: '1v1 돌파', icon: '⚡' },
@@ -142,6 +183,19 @@ export default async function PublicProfilePage({ params }: Props) {
       <div style={{ padding: '16px 20px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <PlayerCard player={player} />
         <FeaturedHighlights highlights={highlights ?? []} />
+        <MeasuredStats
+          types={typedMeasurementTypes}
+          records={typedMeasurementRecords.map((record) => ({
+            ...record,
+            verification_status: record.verification_status ?? null,
+          }))}
+          medals={typedMedals.map((medal) => ({
+            ...medal,
+            medal_rules: medal.medal_rules && !Array.isArray(medal.medal_rules)
+              ? medal.medal_rules
+              : null,
+          }))}
+        />
         <TagPortfolio tags={tagList} />
         <SeasonHistory seasons={seasons ?? []} />
       </div>

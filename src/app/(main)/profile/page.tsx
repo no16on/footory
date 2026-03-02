@@ -4,17 +4,20 @@ import { useRouter } from 'next/navigation'
 import { NavHeader } from '@/components/ui/nav-header'
 import { PlayerCard } from '@/components/profile/PlayerCard'
 import { FeaturedHighlights } from '@/components/profile/FeaturedHighlights'
+import { MeasuredStats } from '@/components/profile/MeasuredStats'
 import { TagPortfolio } from '@/components/profile/TagPortfolio'
 import { SeasonHistory } from '@/components/profile/SeasonHistory'
 import { useProfile } from '@/hooks/useProfile'
 import { useHighlights } from '@/hooks/useClips'
 import { useTagPortfolio } from '@/hooks/useTags'
+import { useMeasurements } from '@/hooks/useMeasurements'
 
 export default function ProfilePage() {
   const router = useRouter()
   const { profile, isLoading } = useProfile()
   const { highlights } = useHighlights(profile?.id)
   const { tagStats } = useTagPortfolio(profile?.id)
+  const { types: measurementTypes, records: measurementRecords, medals } = useMeasurements()
 
   function handleShare() {
     if (!profile) return
@@ -147,6 +150,14 @@ export default function ProfilePage() {
         {/* Featured Highlights */}
         <FeaturedHighlights
           highlights={highlights.filter(h => h.is_featured)}
+          isOwner
+        />
+
+        {/* Measured Stats */}
+        <MeasuredStats
+          types={measurementTypes}
+          records={measurementRecords}
+          medals={medals}
           isOwner
         />
 

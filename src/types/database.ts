@@ -125,6 +125,105 @@ export type Database = {
         }
         Update: Partial<Database['public']['Tables']['clip_tags']['Insert']>
       }
+      measurement_types: {
+        Relationships: []
+        Row: {
+          id: string
+          display_name: string
+          unit: string
+          condition_operator: string
+          distance_m: number | null
+          sort_order: number
+          is_active: boolean
+        }
+        Insert: {
+          id: string
+          display_name: string
+          unit: string
+          condition_operator: string
+          distance_m?: number | null
+          sort_order?: number
+          is_active?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['measurement_types']['Insert']>
+      }
+      measurement_records: {
+        Relationships: []
+        Row: {
+          id: string
+          player_id: string
+          type_id: string
+          value_display: string
+          value_normalized: number
+          attempt_context: string | null
+          recorded_at: string
+          location: string | null
+          note: string | null
+          evidence_media_url: string | null
+          verification_status: string | null
+          verified_by: string | null
+          verified_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          player_id: string
+          type_id: string
+          value_display: string
+          value_normalized: number
+          attempt_context?: string | null
+          recorded_at: string
+          location?: string | null
+          note?: string | null
+          evidence_media_url?: string | null
+          verification_status?: string | null
+          verified_by?: string | null
+          verified_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['measurement_records']['Insert']>
+      }
+      medal_rules: {
+        Relationships: []
+        Row: {
+          id: string
+          type_id: string
+          display_name: string
+          threshold_value: number
+          sort_order: number
+          is_active: boolean
+        }
+        Insert: {
+          id: string
+          type_id: string
+          display_name: string
+          threshold_value: number
+          sort_order?: number
+          is_active?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['medal_rules']['Insert']>
+      }
+      player_medals: {
+        Relationships: []
+        Row: {
+          id: string
+          player_id: string
+          medal_rule_id: string
+          earned_from_record_id: string | null
+          earned_at: string
+          verification_status_snapshot: string | null
+          is_featured: boolean
+        }
+        Insert: {
+          id?: string
+          player_id: string
+          medal_rule_id: string
+          earned_from_record_id?: string | null
+          earned_at?: string
+          verification_status_snapshot?: string | null
+          is_featured?: boolean
+        }
+        Update: Partial<Database['public']['Tables']['player_medals']['Insert']>
+      }
       seasons: {
         Relationships: []
         Row: {
