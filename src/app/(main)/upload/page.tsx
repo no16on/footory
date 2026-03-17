@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { NavHeader } from '@/components/ui/nav-header'
-import { UploadDropzone } from '@/components/upload/UploadDropzone'
+import { UploadDropzone, resolveContentType } from '@/components/upload/UploadDropzone'
 import { TrimPreview } from '@/components/upload/TrimPreview'
 import { TagSelector } from '@/components/upload/TagSelector'
 import { useUploadStore } from '@/stores/upload-store'
@@ -78,13 +78,15 @@ export default function UploadPage() {
     store.setUploadProgress(0)
     setSubmitError(null)
 
+    const contentType = resolveContentType(file)
+
     try {
       const presignRes = await fetch('/api/upload/presign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
-          contentType: file.type,
+          contentType,
           fileSize: file.size,
         }),
       })
@@ -93,22 +95,7 @@ export default function UploadPage() {
 
       const { presignedUrl, key } = presignData
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            store.setUploadProgress(Math.round((e.loaded / e.total) * 100))
-          }
-        }
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload failed: ${xhr.status}`))
-        }
-        xhr.onerror = () => reject(new Error('Upload network error'))
-        xhr.open('PUT', presignedUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
-      })
+      await uploadWithRetry(presignedUrl, file, contentType, 2)
 
       const clipRes = await fetch('/api/clips', {
         method: 'POST',
@@ -130,6 +117,56 @@ export default function UploadPage() {
       setSubmitError(msg)
       store.setStep('select')
     }
+  }
+
+  /** XHR 업로드 (타임아웃 + 재시도) */
+  function uploadWithRetry(
+    url: string,
+    file: File,
+    contentType: string,
+    retries: number,
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      // 5분 타임아웃 (모바일 대용량 파일 고려)
+      xhr.timeout = 5 * 60 * 1000
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          store.setUploadProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve()
+        else reject(new Error(`업로드 실패 (${xhr.status})`))
+      }
+      xhr.onerror = () => {
+        if (retries > 0) {
+          store.setUploadProgress(0)
+          setTimeout(() => {
+            uploadWithRetry(url, file, contentType, retries - 1)
+              .then(resolve)
+              .catch(reject)
+          }, 2000)
+        } else {
+          reject(new Error('네트워크 오류로 업로드에 실패했습니다. 다시 시도해주세요.'))
+        }
+      }
+      xhr.ontimeout = () => {
+        if (retries > 0) {
+          store.setUploadProgress(0)
+          setTimeout(() => {
+            uploadWithRetry(url, file, contentType, retries - 1)
+              .then(resolve)
+              .catch(reject)
+          }, 2000)
+        } else {
+          reject(new Error('업로드 시간이 초과되었습니다. Wi-Fi 연결 후 다시 시도해주세요.'))
+        }
+      }
+      xhr.open('PUT', url)
+      xhr.setRequestHeader('Content-Type', contentType)
+      xhr.send(file)
+    })
   }
 
   async function handleTrimConfirm() {

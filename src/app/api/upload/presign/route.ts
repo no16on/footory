@@ -7,6 +7,18 @@ import { createPresignedUploadUrl, generateVideoKey } from '@/lib/r2/upload'
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
 const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
 
+/** 파일명에서 Content-Type 추론 (모바일 브라우저 MIME 오보고 대응) */
+function inferContentTypeFromName(fileName: string): string | null {
+  const ext = fileName.toLowerCase().split('.').pop()
+  const map: Record<string, string> = {
+    mp4: 'video/mp4',
+    m4v: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+  }
+  return map[ext || ''] || null
+}
+
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(
@@ -27,7 +39,16 @@ export async function POST(req: NextRequest) {
   if (!player) return NextResponse.json({ error: 'Player not found' }, { status: 404 })
 
   const body = await req.json()
-  const { fileName, contentType, fileSize } = body
+  const { fileName, fileSize } = body
+  let { contentType } = body
+
+  // 모바일 브라우저에서 MIME type이 잘못 올 수 있으므로 확장자로 보정
+  if (!contentType || !ALLOWED_TYPES.includes(contentType)) {
+    const inferred = inferContentTypeFromName(fileName || '')
+    if (inferred) {
+      contentType = inferred
+    }
+  }
 
   if (!ALLOWED_TYPES.includes(contentType)) {
     return NextResponse.json({ error: '지원하지 않는 파일 형식입니다 (MP4, MOV, WebM만 가능)' }, { status: 400 })
