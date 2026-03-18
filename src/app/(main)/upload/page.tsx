@@ -73,6 +73,22 @@ export default function UploadPage() {
     startUpload(file)
   }
 
+  /** presigned URL 발급 */
+  async function fetchPresignedUrl(file: File, contentType: string) {
+    const res = await fetch('/api/upload/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType,
+        fileSize: file.size,
+      }),
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+    return data as { presignedUrl: string; key: string }
+  }
+
   async function startUpload(file: File) {
     store.setStep('uploading')
     store.setUploadProgress(0)
@@ -81,21 +97,9 @@ export default function UploadPage() {
     const contentType = resolveContentType(file)
 
     try {
-      const presignRes = await fetch('/api/upload/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType,
-          fileSize: file.size,
-        }),
-      })
-      const presignData = await presignRes.json()
-      if (presignData.error) throw new Error(presignData.error)
+      const { presignedUrl, key } = await fetchPresignedUrl(file, contentType)
 
-      const { presignedUrl, key } = presignData
-
-      await uploadWithRetry(presignedUrl, file, contentType, 2)
+      await uploadToR2(presignedUrl, file, contentType)
 
       const clipRes = await fetch('/api/clips', {
         method: 'POST',
@@ -119,17 +123,19 @@ export default function UploadPage() {
     }
   }
 
-  /** XHR 업로드 (타임아웃 + 재시도) */
-  function uploadWithRetry(
-    url: string,
+  /** R2로 XHR 업로드 (파일 크기 기반 동적 타임아웃 + 실패 시 새 presigned URL로 재시도) */
+  async function uploadToR2(
+    presignedUrl: string,
     file: File,
     contentType: string,
-    retries: number,
+    retries = 2,
   ): Promise<void> {
+    // 최소 3분, 50KB/s 기준으로 파일 크기에 비례한 타임아웃
+    const timeoutMs = Math.max(3 * 60 * 1000, Math.ceil(file.size / 51200) * 1000 * 2)
+
     return new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
-      // 5분 타임아웃 (모바일 대용량 파일 고려)
-      xhr.timeout = 5 * 60 * 1000
+      xhr.timeout = timeoutMs
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable) {
           store.setUploadProgress(Math.round((e.loaded / e.total) * 100))
@@ -139,31 +145,27 @@ export default function UploadPage() {
         if (xhr.status >= 200 && xhr.status < 300) resolve()
         else reject(new Error(`업로드 실패 (${xhr.status})`))
       }
-      xhr.onerror = () => {
-        if (retries > 0) {
+
+      const handleRetry = async () => {
+        if (retries <= 0) {
+          reject(new Error('네트워크 오류로 업로드에 실패했습니다. Wi-Fi 연결 후 다시 시도해주세요.'))
+          return
+        }
+        try {
+          // 재시도 시 새 presigned URL 발급 (기존 URL은 부분 업로드로 오염됨)
           store.setUploadProgress(0)
-          setTimeout(() => {
-            uploadWithRetry(url, file, contentType, retries - 1)
-              .then(resolve)
-              .catch(reject)
-          }, 2000)
-        } else {
-          reject(new Error('네트워크 오류로 업로드에 실패했습니다. 다시 시도해주세요.'))
+          const { presignedUrl: freshUrl } = await fetchPresignedUrl(file, contentType)
+          await uploadToR2(freshUrl, file, contentType, retries - 1)
+          resolve()
+        } catch (retryErr) {
+          reject(retryErr)
         }
       }
-      xhr.ontimeout = () => {
-        if (retries > 0) {
-          store.setUploadProgress(0)
-          setTimeout(() => {
-            uploadWithRetry(url, file, contentType, retries - 1)
-              .then(resolve)
-              .catch(reject)
-          }, 2000)
-        } else {
-          reject(new Error('업로드 시간이 초과되었습니다. Wi-Fi 연결 후 다시 시도해주세요.'))
-        }
-      }
-      xhr.open('PUT', url)
+
+      xhr.onerror = () => { handleRetry() }
+      xhr.ontimeout = () => { handleRetry() }
+
+      xhr.open('PUT', presignedUrl)
       xhr.setRequestHeader('Content-Type', contentType)
       xhr.send(file)
     })

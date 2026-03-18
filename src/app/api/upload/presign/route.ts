@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   const key = generateVideoKey(player.id, fileName)
-  const presignedUrl = await createPresignedUploadUrl(key, contentType)
+  const presignedUrl = await createPresignedUploadUrl(key, contentType, fileSize)
 
   return NextResponse.json({ presignedUrl, key })
 }
