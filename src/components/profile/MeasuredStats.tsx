@@ -112,7 +112,7 @@ export function MeasuredStats({ types, records, medals, isOwner }: MeasuredStats
         )}
       </div>
 
-      {records.length === 0 && isOwner ? (
+      {records.length === 0 ? (
         <div
           style={{
             background: '#12160F',
@@ -131,26 +131,28 @@ export function MeasuredStats({ types, records, medals, isOwner }: MeasuredStats
               margin: 0,
             }}
           >
-            첫 측정 기록을 추가해보세요
+            {isOwner ? '첫 측정 기록을 추가해보세요' : '아직 측정 기록이 없습니다'}
           </p>
-          <Link
-            href="/measurements"
-            style={{
-              display: 'inline-block',
-              marginTop: '12px',
-              padding: '8px 16px',
-              background: 'rgba(212,168,67,0.12)',
-              border: '1px solid rgba(212,168,67,0.3)',
-              borderRadius: '8px',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '13px',
-              fontWeight: 600,
-              color: '#D4A843',
-              textDecoration: 'none',
-            }}
-          >
-            측정 기록 추가
-          </Link>
+          {isOwner && (
+            <Link
+              href="/measurements"
+              style={{
+                display: 'inline-block',
+                marginTop: '12px',
+                padding: '8px 16px',
+                background: 'rgba(212,168,67,0.12)',
+                border: '1px solid rgba(212,168,67,0.3)',
+                borderRadius: '8px',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '13px',
+                fontWeight: 600,
+                color: '#D4A843',
+                textDecoration: 'none',
+              }}
+            >
+              측정 기록 추가
+            </Link>
+          )}
         </div>
       ) : (
       <div
