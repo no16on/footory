@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { NavHeader } from '@/components/ui/nav-header'
-import { UploadDropzone } from '@/components/upload/UploadDropzone'
+import { UploadDropzone, resolveContentType } from '@/components/upload/UploadDropzone'
 import { TrimPreview } from '@/components/upload/TrimPreview'
 import { TagSelector } from '@/components/upload/TagSelector'
 import { useUploadStore } from '@/stores/upload-store'
@@ -73,42 +73,33 @@ export default function UploadPage() {
     startUpload(file)
   }
 
+  /** presigned URL 발급 */
+  async function fetchPresignedUrl(file: File, contentType: string) {
+    const res = await fetch('/api/upload/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType,
+        fileSize: file.size,
+      }),
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+    return data as { presignedUrl: string; key: string }
+  }
+
   async function startUpload(file: File) {
     store.setStep('uploading')
     store.setUploadProgress(0)
     setSubmitError(null)
 
+    const contentType = resolveContentType(file)
+
     try {
-      const presignRes = await fetch('/api/upload/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType: file.type,
-          fileSize: file.size,
-        }),
-      })
-      const presignData = await presignRes.json()
-      if (presignData.error) throw new Error(presignData.error)
+      const { presignedUrl, key } = await fetchPresignedUrl(file, contentType)
 
-      const { presignedUrl, key } = presignData
-
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            store.setUploadProgress(Math.round((e.loaded / e.total) * 100))
-          }
-        }
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve()
-          else reject(new Error(`Upload failed: ${xhr.status}`))
-        }
-        xhr.onerror = () => reject(new Error('Upload network error'))
-        xhr.open('PUT', presignedUrl)
-        xhr.setRequestHeader('Content-Type', file.type)
-        xhr.send(file)
-      })
+      await uploadToR2(presignedUrl, file, contentType)
 
       const clipRes = await fetch('/api/clips', {
         method: 'POST',
@@ -130,6 +121,54 @@ export default function UploadPage() {
       setSubmitError(msg)
       store.setStep('select')
     }
+  }
+
+  /** R2로 XHR 업로드 (파일 크기 기반 동적 타임아웃 + 실패 시 새 presigned URL로 재시도) */
+  async function uploadToR2(
+    presignedUrl: string,
+    file: File,
+    contentType: string,
+    retries = 2,
+  ): Promise<void> {
+    // 최소 3분, 50KB/s 기준으로 파일 크기에 비례한 타임아웃
+    const timeoutMs = Math.max(3 * 60 * 1000, Math.ceil(file.size / 51200) * 1000 * 2)
+
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.timeout = timeoutMs
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          store.setUploadProgress(Math.round((e.loaded / e.total) * 100))
+        }
+      }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve()
+        else reject(new Error(`업로드 실패 (${xhr.status})`))
+      }
+
+      const handleRetry = async () => {
+        if (retries <= 0) {
+          reject(new Error('네트워크 오류로 업로드에 실패했습니다. Wi-Fi 연결 후 다시 시도해주세요.'))
+          return
+        }
+        try {
+          // 재시도 시 새 presigned URL 발급 (기존 URL은 부분 업로드로 오염됨)
+          store.setUploadProgress(0)
+          const { presignedUrl: freshUrl } = await fetchPresignedUrl(file, contentType)
+          await uploadToR2(freshUrl, file, contentType, retries - 1)
+          resolve()
+        } catch (retryErr) {
+          reject(retryErr)
+        }
+      }
+
+      xhr.onerror = () => { handleRetry() }
+      xhr.ontimeout = () => { handleRetry() }
+
+      xhr.open('PUT', presignedUrl)
+      xhr.setRequestHeader('Content-Type', contentType)
+      xhr.send(file)
+    })
   }
 
   async function handleTrimConfirm() {

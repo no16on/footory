@@ -12,12 +12,17 @@ function getR2Client() {
   })
 }
 
-export async function createPresignedUploadUrl(key: string, contentType: string) {
+export async function createPresignedUploadUrl(
+  key: string,
+  contentType: string,
+  contentLength?: number,
+) {
   const client = getR2Client()
   const command = new PutObjectCommand({
     Bucket: process.env.R2_BUCKET_NAME!,
     Key: key,
     ContentType: contentType,
+    ...(contentLength ? { ContentLength: contentLength } : {}),
   })
   const url = await getSignedUrl(client, command, { expiresIn: 3600 })
   return url

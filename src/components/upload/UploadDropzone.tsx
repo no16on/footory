@@ -3,8 +3,37 @@
 import { useRef, useState } from 'react'
 
 const ALLOWED_TYPES = ['video/mp4', 'video/quicktime', 'video/webm']
+const ALLOWED_EXTENSIONS = ['.mp4', '.mov', '.webm', '.m4v']
 const MAX_SIZE_MB = 500
 const MAX_DURATION_SEC = 300
+const METADATA_TIMEOUT_MS = 10000
+
+/** 파일 확장자에서 MIME type 추론 (모바일 브라우저 fallback) */
+function inferContentType(fileName: string): string | null {
+  const ext = fileName.toLowerCase().split('.').pop()
+  const map: Record<string, string> = {
+    mp4: 'video/mp4',
+    m4v: 'video/mp4',
+    mov: 'video/quicktime',
+    webm: 'video/webm',
+  }
+  return map[ext || ''] || null
+}
+
+/** 파일이 허용된 비디오 형식인지 확인 (MIME + 확장자 모두 체크) */
+function isAllowedVideo(file: File): boolean {
+  // 1) MIME type이 있으면 체크
+  if (file.type && ALLOWED_TYPES.includes(file.type)) return true
+  // 2) MIME type이 빈 문자열이거나 generic인 경우 확장자로 판단
+  const inferred = inferContentType(file.name)
+  return inferred !== null
+}
+
+/** 업로드에 사용할 Content-Type 결정 */
+export function resolveContentType(file: File): string {
+  if (file.type && ALLOWED_TYPES.includes(file.type)) return file.type
+  return inferContentType(file.name) || 'video/mp4'
+}
 
 type Props = {
   onFileSelected: (file: File, duration: number) => void
@@ -17,7 +46,7 @@ export function UploadDropzone({ onFileSelected }: Props) {
 
   function validateAndSelect(file: File) {
     setError(null)
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!isAllowedVideo(file)) {
       setError('MP4, MOV, WebM 파일만 업로드할 수 있습니다')
       return
     }
@@ -27,10 +56,28 @@ export function UploadDropzone({ onFileSelected }: Props) {
     }
     // Check duration via video element
     const video = document.createElement('video')
+    video.preload = 'metadata'
     const url = URL.createObjectURL(file)
     video.src = url
-    video.onloadedmetadata = () => {
+
+    let resolved = false
+    const cleanup = () => {
+      if (resolved) return
+      resolved = true
       URL.revokeObjectURL(url)
+    }
+
+    // 타임아웃: 모바일에서 메타데이터 로딩이 실패할 수 있음
+    const timer = setTimeout(() => {
+      if (resolved) return
+      cleanup()
+      // 메타데이터 없이 진행 (duration 0으로 fallback)
+      onFileSelected(file, 0)
+    }, METADATA_TIMEOUT_MS)
+
+    video.onloadedmetadata = () => {
+      clearTimeout(timer)
+      cleanup()
       if (video.duration > MAX_DURATION_SEC) {
         setError(`영상은 최대 5분(300초)까지 업로드 가능합니다`)
         return
@@ -38,8 +85,9 @@ export function UploadDropzone({ onFileSelected }: Props) {
       onFileSelected(file, video.duration)
     }
     video.onerror = () => {
-      URL.revokeObjectURL(url)
-      setError('영상 파일을 읽을 수 없습니다')
+      clearTimeout(timer)
+      cleanup()
+      setError('영상 파일을 읽을 수 없습니다. 다른 파일을 시도해주세요.')
     }
   }
 
@@ -149,7 +197,8 @@ export function UploadDropzone({ onFileSelected }: Props) {
       <input
         ref={inputRef}
         type="file"
-        accept="video/mp4,video/quicktime,video/webm"
+        accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm,.m4v"
+        capture="environment"
         onChange={handleChange}
         style={{ display: 'none' }}
       />
